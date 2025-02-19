@@ -247,18 +247,22 @@ impl Plugin for Crrshrr {
                 self.holdover.push(data[0])
             }
 
+
             for i in 0..data.len() {
                 // Bit crush.
+
+                let mut has_content = true;
                 let bits_value: f32 = self.params.bits.smoothed.next();
                 let bits: f32 = (2.0 as f32).powf(bits_value);
+                let noise_floor: f32 = 1.0/bits;
+                if data[i] < noise_floor && data[i] > -noise_floor {
+                    has_content = false;
+                }
 
                 // Generate rand noise.
                 // let noise = (rand::thread_rng().gen_range(0.0..2.0) * self.params.noise.smoothed.next());
                 
-                // Generate Perlin noise.
-                let noise_floor: f32 = 1.0/(2.0_f32.powf(bits_value));
-                let buffer_content_sum = data.iter().sum::<f32>();
-                if buffer_content_sum > noise_floor || buffer_content_sum < -noise_floor {
+                if has_content {
                     let noise = gen_perlin_noise(rand::thread_rng().gen_range(0..data.len() as i32)) * 
                         self.params.noise.smoothed.next();
                     // Scale down with added noise.
@@ -269,6 +273,8 @@ impl Plugin for Crrshrr {
                     let mut sample_rescaled: f32 = 2.0 * (sample_rounded / bits) - 1.0;
                     // Add the data back.
                     data[i] = sample_rescaled;
+                } else {
+                    data[i] = 0.0
                 }
                 // Downsampling code inspired by https://github.com/buosseph/juce-decimator/
 
