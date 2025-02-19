@@ -256,17 +256,20 @@ impl Plugin for Crrshrr {
                 // let noise = (rand::thread_rng().gen_range(0.0..2.0) * self.params.noise.smoothed.next());
                 
                 // Generate Perlin noise.
-                let noise = gen_perlin_noise(rand::thread_rng().gen_range(0..data.len() as i32)) * 
-                    self.params.noise.smoothed.next();
-                // Scale down with added noise.
-                let sample_scaled: f32 = bits * (0.5 * data[i] + 0.5) + noise;
-                // Round down.
-                let sample_rounded: f32 = sample_scaled.floor();
-                // Scale up.
-                let mut sample_rescaled: f32 = 2.0 * (sample_rounded / bits) - 1.0;
-                // Add the data back.
-                data[i] = sample_rescaled;
-
+                let noise_floor: f32 = 1.0/(2.0_f32.powf(bits_value));
+                let buffer_content_sum = data.iter().sum::<f32>();
+                if buffer_content_sum > noise_floor || buffer_content_sum < -noise_floor {
+                    let noise = gen_perlin_noise(rand::thread_rng().gen_range(0..data.len() as i32)) * 
+                        self.params.noise.smoothed.next();
+                    // Scale down with added noise.
+                    let sample_scaled: f32 = bits * (0.5 * data[i] + 0.5) + noise;
+                    // Round down.
+                    let sample_rounded: f32 = sample_scaled.floor();
+                    // Scale up.
+                    let mut sample_rescaled: f32 = 2.0 * (sample_rounded / bits) - 1.0;
+                    // Add the data back.
+                    data[i] = sample_rescaled;
+                }
                 // Downsampling code inspired by https://github.com/buosseph/juce-decimator/
 
                 let ratio = 1.0 - (self.params.rate.smoothed.next() as f32 / self.samplerate).clamp(0.0, 1.0);
