@@ -17,7 +17,7 @@ struct Data {
 impl Model for Data {}
 
 pub(crate) fn default_state() -> Arc<ViziaState> {
-    ViziaState::new(|| (200, 300))
+    ViziaState::new(|| (200, 250))
 }
 
 pub(crate) fn create(
@@ -47,19 +47,15 @@ pub(crate) fn create(
             ParamSlider::new(cx, Data::params, |params| &params.bits)
                 .background_color(Color::white());
 
-            Label::new(cx, "RATE").color(Color::white());
+            Label::new(cx, "RATE")
+                .color(Color::white())
+                .top(Pixels(10.0));
             ParamSlider::new(cx, Data::params, |params| &params.rate)
                 .background_color(Color::white());
 
-            Label::new(cx, "RAND").color(Color::white());
-            ParamSlider::new(cx, Data::params, |params| &params.rand)
-                .background_color(Color::white());
-
-            Label::new(cx, "RAND RATE").color(Color::white());
-            ParamSlider::new(cx, Data::params, |params| &params.rand_rate)
-                .background_color(Color::white());
-
-            Label::new(cx, "NOISE").color(Color::white());
+            Label::new(cx, "NOISE")
+                .color(Color::white())
+                .top(Pixels(10.0));
             ParamSlider::new(cx, Data::params, |params| &params.noise)
                 .background_color(Color::white());
         })

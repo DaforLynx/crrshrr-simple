@@ -1,11 +1,11 @@
 [package]
-name = "crrshrr"
-version = "0.1.0"
+name = "crrshrr-simple"
+version = "0.0.1"
 edition = "2021"
-authors = ["LASHLIGHT <lashlight@proton.me>"]
+authors = ["LASHLIGHT <lashlight@proton.me> + DaforLynx"]
 license = "GPL-3.0-or-later"
 homepage = ""
-description = "A simple bit crusher."
+description = "A simpler bit crusher."
 
 [workspace]
 members = ["xtask"]

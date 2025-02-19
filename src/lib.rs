@@ -1,7 +1,7 @@
 #![allow(unused)]
 use nih_plug::prelude::*;
 use nih_plug_vizia::ViziaState;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use rand::Rng;
 
 mod editor;
@@ -18,8 +18,11 @@ fn gen_perlin_noise(x: i32) -> f32 {
 
 struct Crrshrr {
     params: Arc<CrrshrrParams>,
+    samplerate: f32,
     counter: i32,
     offset: usize,
+    counter2: f32,
+    holdover: Vec<f32>,
 }
 
 #[derive(Params)]
@@ -32,10 +35,10 @@ struct CrrshrrParams {
     pub bits: FloatParam,
     #[id = "rate"]
     pub rate: IntParam,
-    #[id = "rand"]
-    pub rand: IntParam,
-    #[id = "rand_rate"]
-    pub rand_rate: IntParam,
+    // #[id = "rand"]
+    // pub rand: IntParam,
+    // #[id = "rand_rate"]
+    // pub rand_rate: IntParam,
     #[id = "noise"]
     pub noise: FloatParam,
 }
@@ -44,8 +47,11 @@ impl Default for Crrshrr {
     fn default() -> Self {
         Self {
             params: Arc::new(CrrshrrParams::default()),
+            samplerate: 44100.0,
             counter: 0,
             offset: 0,
+            counter2: 0.0,
+            holdover: Vec::new(),
         }
     }
 }
@@ -76,24 +82,24 @@ impl Default for CrrshrrParams {
              */
             rate: IntParam::new(
                 "rate",
-                1,
-                IntRange::Linear { min: 1, max: 50, }
+                48000,
+                IntRange::Linear { min: 1000, max: 48000, }
             ),
 
             /*
             Offsets the sample rate's sample & hold logic. 
              */
-            rand: IntParam::new(
-                "rand",
-                0,
-                IntRange::Linear { min: 0, max: 100, },
-            ),
+            // rand: IntParam::new(
+            //     "rand",
+            //     0,
+            //     IntRange::Linear { min: 0, max: 100, },
+            // ),
 
-            rand_rate: IntParam::new(
-                "rand rate",
-                0,
-                IntRange::Linear { min: 0, max: 64, },
-            ),
+            // rand_rate: IntParam::new(
+            //     "rand rate",
+            //     0,
+            //     IntRange::Linear { min: 0, max: 64, },
+            // ),
 
             /*
             This is really more of a gain control for the rand-based noise that gets added to the sample 
@@ -110,7 +116,7 @@ impl Default for CrrshrrParams {
 }
 
 impl Plugin for Crrshrr {
-    const NAME: &'static str = "crrshrr";
+    const NAME: &'static str = "crrshrr (precise)";
     const VENDOR: &'static str = "LASHLIGHT";
     const URL: &'static str = env!("CARGO_PKG_HOMEPAGE");
     const EMAIL: &'static str = "lashlight@proton.me";
@@ -161,12 +167,13 @@ impl Plugin for Crrshrr {
     fn initialize(
         &mut self,
         _audio_io_layout: &AudioIOLayout,
-        _buffer_config: &BufferConfig,
+        buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
         // Resize buffers and perform other potentially expensive initialization operations here.
         // The `reset()` function is always called right after this function. You can remove this
         // function if you do not need it.
+        self.samplerate = buffer_config.sample_rate;
         true
     }
 
@@ -219,23 +226,26 @@ impl Plugin for Crrshrr {
         // Get the raw data as a slice 'channel -> [samples]'
         let output = buffer.as_slice();
 
-        if self.counter > self.params.rand_rate.value() {
-            self.counter = 0;
-            // The offset value set to a random number between 0 and the current "rand" value, 
-            // or 0 when "rand" is also at 0. This is due to an error that 'gen_range' throws 
-            // when the range is '0..0'.
-            self.offset = if self.params.rand.value() > 0 { 
-                    rand::thread_rng().gen_range(0..(self.params.rand.value() as usize)) 
-                } else {
-                    0
-                };
-        } else {
-            self.counter += 1;
-        }
+        // if self.counter > self.params.rand_rate.value() {
+        //     self.counter = 0;
+        //     // The offset value set to a random number between 0 and the current "rand" value, 
+        //     // or 0 when "rand" is also at 0. This is due to an error that 'gen_range' throws 
+        //     // when the range is '0..0'.
+        //     self.offset = if self.params.rand.value() > 0 { 
+        //             rand::thread_rng().gen_range(0..(self.params.rand.value() as usize)) 
+        //         } else {
+        //             0
+        //         };
+        // } else {
+        //     self.counter += 1;
+        // }
         
         for channel in 0..output.len() {
             // The current channel's sample data.
             let data: &mut [f32] = output[channel];
+            if self.holdover.len() <= channel {
+                self.holdover.push(data[0])
+            }
 
             for i in 0..data.len() {
                 // Bit crush.
@@ -257,21 +267,42 @@ impl Plugin for Crrshrr {
                 // Add the data back.
                 data[i] = sample_rescaled;
 
-                // Sample & hold.
-                if self.params.rate.smoothed.next() > 1 {
-                    let j: usize = i % ((self.params.rate.smoothed.next() as usize) + self.offset);
+                // Downsampling code inspired by https://github.com/buosseph/juce-decimator/
 
-                    // This is the first iteration of the sample & hold algo, before the offset was 
-                    // introduced.
-                    // 
-                    // if (j != 0) {
+                let ratio = 1.0 - (self.params.rate.smoothed.next() as f32 / self.samplerate).clamp(0.0, 1.0);
+
+                // Sample & hold.
+                if self.params.rate.smoothed.next() < 48000 {
+                    // let j: usize = self.counter2 as usize % (ratio as usize);
+
+                    // // This is the first iteration of the sample & hold algo, before the offset was 
+                    // // introduced.
+                    // // 
+                    // // if (j != 0) {
+                    // //     data[i] = data[i - j];
+                    // // }
+
+                    // // Since the offset can point to out of bound indexes, this makes sure that it 
+                    // // stays within the range of the data array (0..1023).
+                    // if (j > 0 && j < data.len()) {
                     //     data[i] = data[i - j];
                     // }
+                    if i == data.len() - 1 {
+                        self.holdover[channel] = data[i]
+                    }
 
-                    // Since the offset can point to out of bound indexes, this makes sure that it 
-                    // stays within the range of the data array (0..1023).
-                    if (j > 0 && j < data.len()) {
-                        data[i] = data[i - j];
+                    self.counter2 += ratio;
+
+                    // When the counter overflows...
+                    if self.counter2 >= 1.0 {
+                        // Set this sample to the value of the last one (hold)
+                        if i != 0 {
+                            data[i] = data[i-1]
+                        } else {
+                            data[i] = self.holdover[channel]
+                        }
+                        // Then reset the counter with the "remainder"
+                        self.counter2 -= 1.0;
                     }
                 }
             }
