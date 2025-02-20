@@ -174,55 +174,8 @@ impl Plugin for Crrshrr {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        /** This is the old way, kept here for reference...
-
-        // There are 1024 slices in buffer, eahc of length 2
-        for (idx, channel_samples) in buffer.iter_samples().enumerate() {
-            let mut snh: f32 = 0.0;
-
-            // println!("channel_sampled idx={}, len={}", idx, channel_samples.len());
-
-            for (ch, sample) in channel_samples.into_iter().enumerate() {
-                // println!("  channel={}, sample={}", ch, sample);
-
-                let bits_value: f32 = self.params.bits.smoothed.next();
-                let bits: f32 = (2.0 as f32).powf(bits_value);
-                let sample_scaled: f32 = bits * (0.5 * *sample + 0.5);
-                let sample_rounded: f32 = sample_scaled.floor();
-                let sample_rescaled: f32 = 2.0 * (sample_rounded / bits) - 1.0;
-                // *sample = sample_rescaled;
-
-                // set _ > 0 for now to avoid silence...
-                if self.params.rate.smoothed.next() > 1 {
-                    if ch % self.params.rate.smoothed.next() as usize != 0 {
-                        // let b: f32 = channel_samples.get_unchecked_mut(idx % rate).;
-                        // *sample =
-                        snh = sample_rescaled;
-                    } else {
-                        snh = *sample;
-                    }
-                }
-
-                *sample = snh;
-            }
-        }
-        */
         // Get the raw data as a slice 'channel -> [samples]'
         let output = buffer.as_slice();
-
-        // if self.counter > self.params.rand_rate.value() {
-        //     self.counter = 0;
-        //     // The offset value set to a random number between 0 and the current "rand" value,
-        //     // or 0 when "rand" is also at 0. This is due to an error that 'gen_range' throws
-        //     // when the range is '0..0'.
-        //     self.offset = if self.params.rand.value() > 0 {
-        //             rand::thread_rng().gen_range(0..(self.params.rand.value() as usize))
-        //         } else {
-        //             0
-        //         };
-        // } else {
-        //     self.counter += 1;
-        // }
 
         for channel in 0..output.len() {
             // The current channel's sample data.
@@ -242,18 +195,16 @@ impl Plugin for Crrshrr {
 
             for i in 0..data.len() {
                 // Bit crush.
-
                 let mut has_content = true;
                 let bits_value: f32 = self.params.bits.smoothed.next();
                 let bits: f32 = (2.0 as f32).powf(bits_value);
                 let noise_floor: f32 = 1.0 / bits;
-                if data[i] < noise_floor && data[i] > -noise_floor && self.params.noise_gate.value() {
+                if data[i] < noise_floor && data[i] > -noise_floor && self.params.noise_gate.value()
+                {
                     has_content = false;
                 }
 
-                // Generate rand noise.
-                // let noise = (rand::thread_rng().gen_range(0.0..2.0) * self.params.noise.smoothed.next());
-
+                // Generate perlin noise.
                 if has_content {
                     let mut noise = 0.0;
                     if self.params.noise.smoothed.next() != 0.0 {
@@ -272,22 +223,19 @@ impl Plugin for Crrshrr {
                 } else {
                     data[i] = 0.0
                 }
+
                 // "Crunchy" downsampling code inspired by https://github.com/buosseph/juce-decimator/
                 // "Not crunchy" downsampling code inspired by https://github.com/grame-cncm/faustlibraries/
 
                 let downsample_to = self.params.rate.smoothed.next();
                 if downsample_to < 48000 {
                     // Sample & hold 1.
-                    let ratio = 1.0
-                        - (downsample_to as f32 / self.samplerate)
-                            .clamp(0.0, 1.0);
+                    let ratio = 1.0 - (downsample_to as f32 / self.samplerate).clamp(0.0, 1.0);
                     if self.params.crunchy.value() {
                         if i == data.len() - 1 {
                             self.holdover[channel] = data[i]
                         }
-
                         self.counter[channel] += ratio;
-
                         // When the counter overflows...
                         if self.counter[channel] >= 1.0 {
                             // Set this sample to the value of the last one (hold)
@@ -300,11 +248,10 @@ impl Plugin for Crrshrr {
                             self.counter[channel] -= 1.0;
                         }
                     } else {
-                        self.counter2[channel] += 1;
                         // Sample and hold 2
+                        self.counter2[channel] += 1;
                         if (self.counter2[channel] as i64
-                            % ((self.samplerate / downsample_to as f32)
-                                as i64)
+                            % ((self.samplerate / downsample_to as f32) as i64)
                             != 0)
                         {
                             data[i] = self.hold_value[channel]

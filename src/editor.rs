@@ -74,7 +74,6 @@ pub(crate) fn create(
                 .outline_color(Color::white())
                 .outline_width(Pixels(2.0))
                 .top(Pixels(2.0));
-            
         })
         .row_between(Pixels(0.0))
         .child_left(Stretch(1.0))
