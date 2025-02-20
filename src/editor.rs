@@ -38,10 +38,16 @@ pub(crate) fn create(
         VStack::new(cx, |cx| {
             Label::new(cx, "CRRSHRR")
                 .font_size(30.0)
-                .height(Pixels(50.0))
+                .height(Pixels(30.0))
+                .color(Color::white())
+                .top(Pixels(4.0));
+            Label::new(cx, "SIMPLE")
+                .font_size(15.0)
+                .height(Pixels(15.0))
+                .color(Color::grey())
+                .top(Pixels(2.0))
                 .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
-                .color(Color::white());
+                .child_bottom(Pixels(0.0));
 
             Label::new(cx, "BITS").color(Color::white());
             ParamSlider::new(cx, Data::params, |params| &params.bits)
@@ -49,31 +55,35 @@ pub(crate) fn create(
 
             Label::new(cx, "RATE")
                 .color(Color::white())
-                .top(Pixels(10.0));
+                .top(Pixels(6.0));
             ParamSlider::new(cx, Data::params, |params| &params.rate)
                 .background_color(Color::white());
 
             Label::new(cx, "CRUNCHY")
                 .color(Color::white())
-                .top(Pixels(10.0));
+                .top(Pixels(6.0));
             ParamButton::new(cx, Data::params, |params| &params.crunchy)
+                .with_label("")
                 .outline_color(Color::white())
                 .outline_width(Pixels(2.0))
-                .top(Pixels(2.0));
+                .top(Pixels(2.0))
+                .width(Pixels(70.0));
 
             Label::new(cx, "NOISE")
                 .color(Color::white())
-                .top(Pixels(10.0));
+                .top(Pixels(6.0));
             ParamSlider::new(cx, Data::params, |params| &params.noise)
                 .background_color(Color::white());
 
             Label::new(cx, "GATE")
                 .color(Color::white())
-                .top(Pixels(10.0));
+                .top(Pixels(6.0));
             ParamButton::new(cx, Data::params, |params| &params.noise_gate)
+                .with_label("")
                 .outline_color(Color::white())
                 .outline_width(Pixels(2.0))
-                .top(Pixels(2.0));
+                .top(Pixels(2.0))
+                .width(Pixels(70.0));
         })
         .row_between(Pixels(0.0))
         .child_left(Stretch(1.0))

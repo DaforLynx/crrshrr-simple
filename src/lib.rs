@@ -6,6 +6,9 @@ use std::{collections::HashMap, sync::Arc};
 
 mod editor;
 
+/// Code is forked from CRRSHRR by Lashlight https://github.com/erroreyes/crrshrr
+/// The UI, bit depth, and noise generation code is mainly by the original creator.
+
 fn gen_perlin_noise(x: i32) -> f32 {
     let xshift: i128 = ((x << 13) ^ x) as i128;
     let a0: i128 = (xshift * xshift * 15731_i128 + 789221_i128);
@@ -92,7 +95,8 @@ impl Default for CrrshrrParams {
                 },
             ),
 
-            crunchy: BoolParam::new("crunchy", false),
+            /// This swithes the samplerate reduction algorithm between a noisier (S&H 1) and cleaner (S&H 2) one.
+            crunchy: BoolParam::new("crunchy", true),
 
             /*
             This is really more of a gain control for the rand-based noise that gets added to the sample
@@ -106,10 +110,10 @@ impl Default for CrrshrrParams {
 }
 
 impl Plugin for Crrshrr {
-    const NAME: &'static str = "crrshrr (precise)";
-    const VENDOR: &'static str = "LASHLIGHT";
+    const NAME: &'static str = "crrshrr-simple";
+    const VENDOR: &'static str = "DaforLynx";
     const URL: &'static str = env!("CARGO_PKG_HOMEPAGE");
-    const EMAIL: &'static str = "lashlight@proton.me";
+    const EMAIL: &'static str = "daforlynx@gmail.com";
 
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -278,7 +282,7 @@ impl ClapPlugin for Crrshrr {
 }
 
 impl Vst3Plugin for Crrshrr {
-    const VST3_CLASS_ID: [u8; 16] = *b"lashlightcrrshrr";
+    const VST3_CLASS_ID: [u8; 16] = *b"daforlynxcrrshrr";
 
     // And also don't forget to change these categories
     const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] =
