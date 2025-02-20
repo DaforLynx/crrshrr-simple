@@ -1,12 +1,12 @@
 # crrshrr
 
-**crrshrr** is a simple bit crusher effect. It is available as a VST and CLAP plugin for Windows and Linux, and can be compiled to Windows, Linux and OSX. 
+This **crrshrr** is a simpler bit crusher effect than the **crrshrr** it is based off of. It is available as a VST and CLAP plugin for Windows and Linux, and can be compiled to Windows, Linux and OSX.
 
-![screenshot](./img/crrshrr.png)
+There is a "CRUNCH" button which switches the algorithm used for the downsampling. No crunch can only downsample at certain thresholds, but results in a different, cleaner sound. With crunch on, you get a noisier result, but can freely use whatever samplerate you like.  
 
-While the bit depth and (sample) rate parameters do what may be expected to, the random and random rate parameters add a bit of a distinctive flavor to it.  
+The "GATE" button determines whether sound at the noise floor (which depends on the bit depth) is rounded up or down. At lower bit depth settings this results in a noticeable "gating" effect.
 
-This was created as a way to play around with Rust, [nih-plug](https://github.com/robbert-vdh/nih-plug), and audio effects development in general. 
+This was created as a way to play around with Rust, [nih-plug](https://github.com/robbert-vdh/nih-plug), and audio effects development in general.
 
 ## Building
 
