@@ -17,7 +17,7 @@ struct Data {
 impl Model for Data {}
 
 pub(crate) fn default_state() -> Arc<ViziaState> {
-    ViziaState::new(|| (200, 250))
+    ViziaState::new(|| (200, 350))
 }
 
 pub(crate) fn create(
@@ -53,11 +53,28 @@ pub(crate) fn create(
             ParamSlider::new(cx, Data::params, |params| &params.rate)
                 .background_color(Color::white());
 
+            Label::new(cx, "CRUNCHY")
+                .color(Color::white())
+                .top(Pixels(10.0));
+            ParamButton::new(cx, Data::params, |params| &params.crunchy)
+                .outline_color(Color::white())
+                .outline_width(Pixels(2.0))
+                .top(Pixels(2.0));
+
             Label::new(cx, "NOISE")
                 .color(Color::white())
                 .top(Pixels(10.0));
             ParamSlider::new(cx, Data::params, |params| &params.noise)
                 .background_color(Color::white());
+
+            Label::new(cx, "GATE")
+                .color(Color::white())
+                .top(Pixels(10.0));
+            ParamButton::new(cx, Data::params, |params| &params.noise_gate)
+                .outline_color(Color::white())
+                .outline_width(Pixels(2.0))
+                .top(Pixels(2.0));
+            
         })
         .row_between(Pixels(0.0))
         .child_left(Stretch(1.0))
