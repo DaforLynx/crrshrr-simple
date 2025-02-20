@@ -1,6 +1,6 @@
 [package]
 name = "crrshrr-simple"
-version = "0.0.1"
+version = "1.0.0"
 edition = "2021"
 authors = ["LASHLIGHT <lashlight@proton.me> + DaforLynx"]
 license = "GPL-3.0-or-later"
