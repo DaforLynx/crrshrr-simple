@@ -53,22 +53,6 @@ pub(crate) fn create(
             ParamSlider::new(cx, Data::params, |params| &params.bits)
                 .background_color(Color::white());
 
-            Label::new(cx, "RATE")
-                .color(Color::white())
-                .top(Pixels(6.0));
-            ParamSlider::new(cx, Data::params, |params| &params.rate)
-                .background_color(Color::white());
-
-            Label::new(cx, "CRUNCHY")
-                .color(Color::white())
-                .top(Pixels(6.0));
-            ParamButton::new(cx, Data::params, |params| &params.crunchy)
-                .with_label("")
-                .outline_color(Color::white())
-                .outline_width(Pixels(2.0))
-                .top(Pixels(2.0))
-                .width(Pixels(70.0));
-
             Label::new(cx, "NOISE")
                 .color(Color::white())
                 .top(Pixels(6.0));
@@ -79,6 +63,22 @@ pub(crate) fn create(
                 .color(Color::white())
                 .top(Pixels(6.0));
             ParamButton::new(cx, Data::params, |params| &params.noise_gate)
+                .with_label("")
+                .outline_color(Color::white())
+                .outline_width(Pixels(2.0))
+                .top(Pixels(2.0))
+                .width(Pixels(70.0));
+
+            Label::new(cx, "RATE")
+                .color(Color::white())
+                .top(Pixels(6.0));
+            ParamSlider::new(cx, Data::params, |params| &params.rate)
+                .background_color(Color::white());
+
+            Label::new(cx, "CRUNCHY")
+                .color(Color::white())
+                .top(Pixels(6.0));
+            ParamButton::new(cx, Data::params, |params| &params.crunchy)
                 .with_label("")
                 .outline_color(Color::white())
                 .outline_width(Pixels(2.0))
